@@ -1,0 +1,20 @@
+{
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "apps/website/src",
+    "projectType": "application",
+    "targets": {
+        "serve": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "vite --port 3000 --host"
+            }
+        },
+        "build": {
+            "executor": "nx:run-commands",
+            "outDir": "../../dist/website",
+            "options": {
+                "command": "vite build"
+            }
+        }
+    }
+}

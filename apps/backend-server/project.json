@@ -1,0 +1,25 @@
+{
+    "name": "backend-server",
+    "type": "application",
+    "targets": {
+      "serve": {
+        "executor": "@nx/js:node",
+        "options": {
+          "buildTarget": "backend-server:build",
+          "watch": true
+        }
+      },
+      "build": {
+        "executor": "@nx/js:tsc",
+        "outputs": ["{workspaceRoot}/dist/apps/backend-server"],
+        "options": {
+          "outputPath": "dist/backend-server",
+          "main": "dist/backend-server/src/server.ts",
+          "tsConfig": "apps/backend-server/tsconfig.app.json",
+          "assets": ["apps/backend-server/src/assets"]
+        }
+      }
+    },
+    "tags": []
+  }
+  

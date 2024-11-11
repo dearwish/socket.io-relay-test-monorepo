@@ -1,0 +1,24 @@
+{
+    "name": "api-server",
+    "type": "application",
+    "targets": {
+      "serve": {
+        "executor": "@nx/js:node",
+        "options": {
+          "buildTarget": "api-server:build",
+          "watch": true        }
+      },
+      "build": {
+        "executor": "@nx/js:tsc",
+        "outputs": ["{workspaceRoot}/dist/apps/api-server"],
+        "options": {
+          "outputPath": "dist/api-server",
+          "main": "dist/api-server/src/api.ts",
+          "tsConfig": "apps/api-server/tsconfig.app.json",
+          "assets": ["apps/api-server/src/assets"]
+        }
+      }
+    },
+    "tags": []
+  }
+  

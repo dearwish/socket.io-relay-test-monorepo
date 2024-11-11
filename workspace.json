@@ -1,0 +1,8 @@
+{
+    "version": 2,
+    "projects": {
+        "website": "apps/website",
+        "api-server": "apps/api-server",
+        "backend-server": "apps/backend-server"
+    }
+}
