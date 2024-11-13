@@ -13,10 +13,15 @@ const io = new Server(server, {
 
 const subscriptions = new Map<string, Set<Socket>>();
 
+interface UserContext {
+  userId: string;
+  sessionNumber: number;
+}
+
 io.on('connection', (socket) => {
     console.log('api-server connected');
-    socket.on('subscribe', (channel) => {
-      socket.emit('message', `Subscribed to ${channel}`);
+    socket.on('subscribe', (channel: string, context: UserContext) => {
+      socket.emit('message', `Subscribed to ${channel} for user ${context.userId} and session ${context.sessionNumber}`);
       if (!subscriptions.has(channel)) {
         const sockets = new Set<Socket>();
         sockets.add(socket);
@@ -38,7 +43,6 @@ setInterval(async () => {
   for (const [channel, url] of Object.entries(channels)) {
     try {
       const response = await axios.get(url);
-      console.log('Backend server: received response on channel', channel);
       subscriptions.get(channel)?.forEach((socket) => {
         console.log('Sending data to subscribed client on channel', channel);
         socket.emit(channel, response.data);

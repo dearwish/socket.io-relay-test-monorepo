@@ -6,7 +6,10 @@
         "executor": "@nx/js:node",
         "options": {
           "buildTarget": "api-server:build",
-          "watch": true        }
+          "watch": true,
+          "inspect": true,
+          "port": 9230
+        }
       },
       "build": {
         "executor": "@nx/js:tsc",

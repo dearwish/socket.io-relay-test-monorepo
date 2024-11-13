@@ -3,6 +3,7 @@
     "allowJs": false,
     "allowSyntheticDefaultImports": true,
     "composite": true,
+    "baseUrl": ".",
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": true,

@@ -1,28 +1,37 @@
 import React, { useEffect, useState } from 'react';
-import ReactDOM from 'react-dom';
-import Client from 'socket.io-client';
 
-const socket = Client('http://localhost:3001'); // Connect to API server
+interface AppProps {
+  socket: SocketIOClient.Socket;
+  context: {
+    userId: string;
+    sessionNumber: number;
+  };
+}
 
-const App = () => {
+export const App = ({ socket, context }: AppProps) => {
   interface WeatherData {
     days: any[];
     address: string;
+
     [key: string]: any;
   }
 
   interface StocksData {
     Information: string;
+
     [key: string]: any;
   }
 
   interface StatusData {
     status: string;
+
     [key: string]: any;
   }
 
   // State to hold messages for each channel
   const [messages, setMessages] = useState<Record<string, string[][]>>({});
+
+  const { userId, sessionNumber } = context;
 
   useEffect(() => {
     socket.on(
@@ -46,8 +55,8 @@ const App = () => {
     );
 
     // Subscribe to channels
-    socket.emit('subscribe', 'weather');
-    socket.emit('subscribe', 'stocks');
+    socket.emit('subscribe', 'weather', { userId, sessionNumber });
+    socket.emit('subscribe', 'stocks', { userId, sessionNumber });
 
     // Cleanup on component unmount
     return () => {
@@ -71,5 +80,3 @@ const App = () => {
     </div>
   );
 };
-
-ReactDOM.render(<App />, document.getElementById('root'));
