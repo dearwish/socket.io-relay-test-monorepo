@@ -3,15 +3,11 @@ import { Server as SocketIOServer } from 'socket.io';
 import fastifySocketIO from 'fastify-socket.io';
 import Client from 'socket.io-client';
 
+import { UserContext } from './user-context';
 import connectionManager from './connection-manager';
 
 interface FastifyInstanceWithIO extends FastifyInstance {
   io: SocketIOServer;
-}
-
-interface UserContext {
-  userId: string;
-  sessionNumber: number;
 }
 
 const fastify = Fastify() as unknown as FastifyInstanceWithIO;
@@ -39,9 +35,14 @@ fastify.ready().then(() => {
   });
 
   // Relay messages from backend-server to website clients
-  backendClient.on('message', (data: any) => {
+  backendClient.on('message', (context: UserContext, data: string) => {
     console.log(`fastify.io.emit: Message received from backend`);
-    fastify.io.emit('message', 'status', {status: data});
+    const socketId = connectionManager.getConnection(context.userId, context.sessionNumber);
+    if (!socketId) {
+      console.log(`No active connection found for ${context.userId} and session ${context.sessionNumber}`);
+      return;
+    }
+    fastify.io.to(socketId).emit('message', 'status', { status: data });
   });
 
   // Handle subscriptions from website
@@ -55,7 +56,7 @@ fastify.ready().then(() => {
         console.log(`Message on ${channel} received from backend`);
         const socketId = connectionManager.getConnection(context.userId, context.sessionNumber);
         if (!socketId) {
-          console.log(`No active connection found for ${context.userId} and session ${context.sessionNumber}`);
+          console.error(`No active connection found for ${context.userId} and session ${context.sessionNumber}`);
           return;
         }
         fastify.io.to(socketId).emit('message', channel, data);
@@ -67,6 +68,12 @@ fastify.ready().then(() => {
       backendClient.emit('subscribe', channel, { userId, sessionNumber });
     });
   });
+
+  backendClient.on('stats', (stats: string) => {
+    const apiStats = connectionManager.getStats();
+    fastify.io.emit('stats', `API:\n${apiStats}\nBackend:\n${stats}\n`);
+  });
+
 
   console.log('API server is running on port 3001');
 });

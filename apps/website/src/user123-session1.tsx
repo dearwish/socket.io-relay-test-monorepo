@@ -11,4 +11,4 @@ const socket = Client('http://localhost:3001', {
 
 const container = document.getElementById('root');
 const root = createRoot(container!);
-root.render(<App socket={socket} context={{ userId: "123", sessionNumber: 2 }} />);
+root.render(<App socket={socket} context={{ userId: "123", sessionNumber: 1 }} />);

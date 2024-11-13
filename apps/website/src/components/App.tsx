@@ -34,6 +34,9 @@ export const App = ({ socket, context }: AppProps) => {
   const { userId, sessionNumber } = context;
 
   useEffect(() => {
+    socket.on('stats', (stats: string) => {
+      console.log(stats);
+    });
     socket.on(
       'message',
       (channel: string, message: WeatherData | StocksData | StatusData) => {
@@ -66,7 +69,7 @@ export const App = ({ socket, context }: AppProps) => {
 
   return (
     <div>
-      <h1>Real-Time Data</h1>
+      <h1>Real-Time Data for user {userId} and session {sessionNumber}</h1>
       {Object.entries(messages).map(([channel, channelMessages]) => (
         <div key={channel}>
           <h3>{channel}</h3>
