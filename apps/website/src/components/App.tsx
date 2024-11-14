@@ -10,14 +10,17 @@ interface AppProps {
 
 export const App = ({ socket, context }: AppProps) => {
   interface WeatherData {
-    days: any[];
-    address: string;
+    temperature: string,
+    condition: string,
+    location: string,
 
     [key: string]: any;
   }
 
   interface StocksData {
-    Information: string;
+    stock: string;
+    price: number;
+    change: number;
 
     [key: string]: any;
   }
@@ -28,8 +31,12 @@ export const App = ({ socket, context }: AppProps) => {
     [key: string]: any;
   }
 
+  interface MessageState {
+    [channel: string]: string[]; // Each channel maps to an array of strings
+  }
+
   // State to hold messages for each channel
-  const [messages, setMessages] = useState<Record<string, string[][]>>({});
+  const [messages, setMessages] = useState<MessageState>({});
 
   const { userId, sessionNumber } = context;
 
@@ -41,19 +48,27 @@ export const App = ({ socket, context }: AppProps) => {
       'message',
       (channel: string, message: WeatherData | StocksData | StatusData) => {
         let formattedMessage;
+        const date = new Date().toUTCString();
         if (channel === 'weather') {
-          formattedMessage = message.address;
+          const { temperature, condition, location } = message as WeatherData;
+          formattedMessage = `${date}: ${temperature} and ${condition} in ${location}`;
         } else if (channel === 'stocks') {
-          formattedMessage = message.Information;
+          const { stock, price, change } = message as StocksData;
+          formattedMessage = `${date}: ${stock} price is $${price} (${change > 0 ? '+' : ''}${change})`;
+        } else if (channel === 'status') {
+          const { status } = message as StatusData;
+          formattedMessage = `${date}: ${status}`;
         } else {
-          formattedMessage = message.status;
+          formattedMessage = message.toString();
         }
 
         // Append the new message to the respective channel
-        setMessages((prev) => ({
-          ...prev,
-          [channel]: [...(prev[channel] || []), formattedMessage],
-        }));
+        setMessages(prev => {
+          return {
+            ...prev,
+            [channel]: [...(prev[channel] || []), formattedMessage],
+          };
+        });
       }
     );
 

@@ -1,9 +1,9 @@
 import express from 'express';
 import { Server } from 'socket.io';
-import axios from 'axios';
 
 import connectionManager from './connection-manager';
 import { UserContext } from './user-context';
+import { getStockData, getWeatherData } from './mock';
 
 
 const app = express();
@@ -35,16 +35,13 @@ io.on('connection', (socket) => {
     });
 });
 
-const channels = {
-  weather: 'https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/london?unitGroup=metric&key=PNTBF7Q3WSNNZKKUSNR7L9SMN&contentType=json',
-  stocks: 'https://www.alphavantage.co/query?function=TOP_GAINERS_LOSERS&apikey=LW63F8ZW0MQ7IU67',
-};
+const channels = ['weather', 'stocks'];
 
 // Emit data to api-server every 30 seconds
 setInterval(async () => {
-  for (const [channel, url] of Object.entries(channels)) {
+  for (const channel of channels) {
     try {
-      const response = await axios.get(url);
+      const response = channel === 'weather' ? getWeatherData() : getStockData();
       subscriptions.get(channel)?.forEach((context) => {
         console.log(`Sending data to subscribed user ${context.userId} session ${context.sessionNumber} on channel`, channel);
         const connection = connectionManager.getConnection(context.userId, context.sessionNumber);
@@ -52,7 +49,7 @@ setInterval(async () => {
           console.log(`No active connection found for user ${context.userId} on channel ${channel}`);
           return;
         }
-        io.to(connection).emit(channel, context, response.data);
+        io.to(connection).emit(channel, context, response);
       });
     } catch (error: Error | any) {
       console.error(`Error fetching data for channel ${channel}:`, error);

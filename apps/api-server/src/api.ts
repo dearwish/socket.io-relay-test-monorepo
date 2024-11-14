@@ -51,7 +51,6 @@ fastify.ready().then(() => {
     socket.on('subscribe', (channel: string, { userId, sessionNumber }: UserContext) => {
       console.log(`Website subscribed to ${channel} for user ${userId} and session ${sessionNumber}`);
       connectionManager.addConnection(userId, sessionNumber, socket.id);
-      socket.emit('subscribed', channel, { userId, sessionNumber });
       backendClient.on(channel, (context: UserContext, data: any) => {
         console.log(`Message on ${channel} received from backend`);
         const socketId = connectionManager.getConnection(context.userId, context.sessionNumber);
