@@ -1,5 +1,5 @@
 export class ConnectionManager {
-  private connections: Map<string, Map<number, string>>;
+  private connections: Map<string, Map<number, Set<string>>>;
 
   constructor() {
     this.connections = new Map();
@@ -8,22 +8,24 @@ export class ConnectionManager {
   // Add a new WebSocket connection for user ID and session number
   public addConnection(userId: string, sessionNumber: number, socketId: string): void {
     // Check if the user already has a connection
-    const userConnections = this.connections.get(userId);
-    if (userConnections) {
-      const userSessionConnection = userConnections.get(sessionNumber);
-      if (userSessionConnection) {
-        console.warn(`User ${userId} already has an active connection for session ${sessionNumber}.`);
-        return;
+    const userSessions = this.connections.get(userId);
+    if (userSessions) {
+      const sessionConnections = userSessions.get(sessionNumber);
+      if (sessionConnections) {
+        sessionConnections.add(socketId);
+      } else {
+        userSessions.set(sessionNumber, new Set([socketId]));
       }
-      userConnections.set(sessionNumber, socketId);
     } else {
-      this.connections.set(userId, new Map([[sessionNumber, socketId]]));
+      this.connections.set(userId, new Map([[sessionNumber, new Set([socketId])]]));
     }
   }
 
-  public getConnection(userId: string, sessionNumber: number): string | undefined {
+  public getConnections(userId: string, sessionNumber: number): Array<string> | undefined {
     const userConnections = this.connections.get(userId);
-    return userConnections?.get(sessionNumber);
+    const sockets = userConnections?.get(sessionNumber);
+
+    return sockets && sockets.size > 0 ? Array.from(sockets) : undefined;
   }
 
   public removeConnection(userId: string, sessionNumber: number): boolean {
@@ -34,7 +36,7 @@ export class ConnectionManager {
     return false;
   }
 
-  public getConnections(userId: string): Map<number, string> | undefined {
+  public getUserSessions(userId: string): Map<number, Set<string>> | undefined {
     return this.connections.get(userId);
   }
 
@@ -50,13 +52,13 @@ export class ConnectionManager {
   }
 
   public getUserStats(userId: string): string {
-    const userConnections = this.getConnections(userId);
+    const userConnections = this.getUserSessions(userId);
     if (!userConnections) {
       return `User ${userId} has no active connections`;
     }
     let stats = ` User ${userId} has ${userConnections.size} active connections:\n`;
-    for (const [sessionNumber, connection] of userConnections) {
-      stats += `  Session: ${sessionNumber} connection: "${connection}"\n`;
+    for (const [sessionNumber, connections] of userConnections) {
+      stats += `  Session: ${sessionNumber} connections: "${Array.from(connections)}"\n`;
     }
     return stats;
   }
@@ -69,7 +71,7 @@ export class ConnectionManager {
     const users = this.getUsers();
     let stats = '';
     for (const userId of users) {
-      const userConnections = this.getConnections(userId);
+      const userConnections = this.getUserSessions(userId);
       if (!userConnections) {
         console.log(`No active connections found for user ${userId}`);
         continue;

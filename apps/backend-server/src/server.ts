@@ -1,10 +1,9 @@
 import express from 'express';
 import { Server } from 'socket.io';
 
-import connectionManager from './connection-manager';
+import connectionManager from './utils/connection-manager';
 import { UserContext } from './user-context';
 import { getStockData, getWeatherData } from './mock';
-
 
 const app = express();
 const server = app.listen(3002, () => {
@@ -28,7 +27,7 @@ io.on('connection', (socket) => {
         const users = new Set<UserContext>();
         users.add(context);
         subscriptions.set(channel, users);
-      } else {
+      } else if (!subscriptions.get(channel)!.has(context)) {
         subscriptions.get(channel)!.add(context);
       }
       console.log(`API server subscribed to ${channel}, total subs ${subscriptions.get(channel)!.size}`);
@@ -44,12 +43,12 @@ setInterval(async () => {
       const response = channel === 'weather' ? getWeatherData() : getStockData();
       subscriptions.get(channel)?.forEach((context) => {
         console.log(`Sending data to subscribed user ${context.userId} session ${context.sessionNumber} on channel`, channel);
-        const connection = connectionManager.getConnection(context.userId, context.sessionNumber);
-        if (!connection) {
+        const connections = connectionManager.getConnections(context.userId, context.sessionNumber);
+        if (!connections?.length) {
           console.log(`No active connection found for user ${context.userId} on channel ${channel}`);
           return;
         }
-        io.to(connection).emit(channel, context, response);
+        io.to(connections).emit(channel, context, response);
       });
     } catch (error: Error | any) {
       console.error(`Error fetching data for channel ${channel}:`, error);
@@ -60,6 +59,17 @@ setInterval(async () => {
 // Emit data to api-server every 30 seconds
 setInterval(async () => {
   const stats = connectionManager.getStats();
+  printSubscriptions();
   console.log('Emitting stats to api-server:\n', stats);
   io.emit('stats', stats);
 }, 60000);
+
+function printSubscriptions() {
+  console.log('Current subscriptions:');
+  for (const [channel, users] of subscriptions) {
+    console.log(`  ${channel}:`);
+    for (const user of users) {
+      console.log(`    ${user.userId} session ${user.sessionNumber}`);
+    }
+  }
+}
